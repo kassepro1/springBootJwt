@@ -1,7 +1,6 @@
 package sn.security.jwt;
 
 
-
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -30,17 +30,25 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @ComponentScan(basePackages = "sn.security")
 
-public class SecurityConfig extends WebSecurityConfigurerAdapter{
-     @Autowired
-     private UserDetailsService userDetailsService;
-     @Autowired
-     private BCryptPasswordEncoder passwordEncoder;
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.userDetailsService(userDetailsService)
-		.passwordEncoder(passwordEncoder);
-	}
-	
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Autowired
+    private UserDetailsService userDetailsService;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService)
+                .passwordEncoder(passwordEncoder);
+    }
+
+
+    @Bean
+    public AuthenticationManager customAuthenticationManager() throws Exception {
+        return authenticationManager();
+    }
+
+
 //	@Autowired
 //	public void configureGlobal(
 //	AuthenticationManagerBuilder auth,DataSource dataSource) throws Exception
@@ -60,24 +68,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 ////	.authoritiesByUsernameQuery("select Utilisateur_username as principal ,	roles_role as role from utilisateur_roles where  Utilisateur_username = ? ")
 ////	.rolePrefix("ROLE_");
 //	}
-	
-	
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
 
-		http.csrf().disable();
-		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		http.authorizeRequests().antMatchers("/login/**").permitAll();
-		http.authorizeRequests().antMatchers("/css/**","/js/**").permitAll();
-		http.authorizeRequests().antMatchers(HttpMethod.POST,"/tasks/**").hasAuthority("ADMIN");
-		http.authorizeRequests().anyRequest().authenticated();
-		http.addFilter(new JWTAuthenticationFilter(authenticationManager()));
-		http.addFilterBefore(new JWTAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
-		
-	}
-	
-	//Formatters
 
-   
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http.csrf().disable();
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.authorizeRequests().antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+        http.authorizeRequests().antMatchers("/register/**").permitAll();
+        http.authorizeRequests().antMatchers("/login/**").permitAll();
+        http.authorizeRequests().antMatchers("/css/**", "/js/**").permitAll();
+        http.authorizeRequests().antMatchers(HttpMethod.POST, "/tasks/**").hasAuthority("ADMIN");
+        http.authorizeRequests().anyRequest().authenticated();
+        http.addFilter(new JWTAuthenticationFilter(authenticationManager()));
+        http.addFilterBefore(new JWTAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+    }
+
+    //Formatters
+
 
 }

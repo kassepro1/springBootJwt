@@ -2,6 +2,8 @@ package sn.security.jwt;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -55,10 +57,13 @@ protected void successfulAuthentication(HttpServletRequest request,
 	 	String jwt = Jwts.builder()
 	 			.setSubject(springUser.getUsername())
 	 			.setExpiration(new Date(System.currentTimeMillis()+SecurityConstants.EXPIRATION_TIME))
-	 			.signWith(SignatureAlgorithm.HS256,SecurityConstants.SECRET)
 	 			.claim("roles",springUser.getAuthorities())
-	 			.compact();
+				.signWith(SignatureAlgorithm.HS256,SecurityConstants.SECRET)
+				.compact();
 	 	response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX+jwt);
-	// super.successfulAuthentication(request, response, chain, authResult);
+		 Map<String,String> token = new HashMap<>();
+		 token.put("token",SecurityConstants.TOKEN_PREFIX+jwt);
+		 response.setContentType("application/json");
+		 new ObjectMapper().writeValue(response.getOutputStream(),token);
 }
 }
